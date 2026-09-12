@@ -591,7 +591,7 @@ export async function resolveGreeting(
     return answer;
   } catch (err) {
     console.error("Sapaan AI gagal, memakai sapaan bawaan", err);
-    return fallbackGreeting(displayName);
+    return fallbackGreeting(displayName, language);
   }
 }
 
