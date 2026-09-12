@@ -658,7 +658,7 @@ export async function sendClosingSurvey(chateraConversationId: string | null): P
 
   const { data: conversation } = await supabaseAdmin
     .from("conversations")
-    .select("id, contact_id, survey_sent_at")
+    .select("id, contact_id, survey_sent_at, language")
     .eq("chatera_conversation_id", chateraConversationId)
     .maybeSingle();
   if (!conversation || conversation.survey_sent_at || !conversation.contact_id) return;
