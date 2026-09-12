@@ -463,7 +463,7 @@ export async function resolveAiReply(text: string): Promise<{
     };
   } catch (err) {
     console.error("AI eksternal gagal, fallback ke kata kunci", err);
-    return resolveKnowledgeReply(text);
+    return resolveKnowledgeReply(text, language);
   }
 }
 
