@@ -406,7 +406,10 @@ async function pickModel(apiKey: string): Promise<string | null> {
  * Jawab pertanyaan bebas memakai AI eksternal dengan konteks Knowledge Base terpilih.
  * Gagal/timeout apa pun -> otomatis fallback ke pencarian kata kunci.
  */
-export async function resolveAiReply(text: string): Promise<{
+export async function resolveAiReply(
+  text: string,
+  language: BotLanguage = "id",
+): Promise<{
   reply: string;
   escalate: boolean;
   matchedCategory?: string | null;
@@ -415,7 +418,7 @@ export async function resolveAiReply(text: string): Promise<{
   const apiKey = process.env["JTG_AI_API_KEY"];
   if (!apiKey) {
     console.error("JTG_AI_API_KEY belum diatur, fallback ke pencarian kata kunci");
-    return resolveKnowledgeReply(text);
+    return resolveKnowledgeReply(text, language);
   }
 
   try {
