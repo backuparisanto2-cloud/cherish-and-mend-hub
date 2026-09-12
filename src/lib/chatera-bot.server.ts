@@ -561,7 +561,10 @@ export async function resolveGreeting(
                 "Kamu asisten chatbot resmi layanan publik Pemerintah Kabupaten Purworejo. " +
                 AI_PERSONA +
                 " Tugasmu sekarang HANYA menulis satu sapaan pembuka, maksimal dua kalimat pendek, " +
-                "tanpa daftar menu, tanpa emoji berlebihan, tanpa tanda kutip.",
+                "tanpa daftar menu, tanpa emoji berlebihan, tanpa tanda kutip." +
+                (language === "en"
+                  ? " TULIS SAPAAN DALAM BAHASA INGGRIS yang natural dan sopan."
+                  : ""),
             },
             {
               role: "user",
