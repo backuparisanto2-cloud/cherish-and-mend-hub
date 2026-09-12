@@ -47,6 +47,7 @@ import {
 
 import { sendWhatsappText } from "@/lib/chatera-send.functions";
 import { setConversationStatus } from "@/lib/conversations.functions";
+import { Linkify } from "@/lib/linkify";
 
 
 
@@ -388,7 +389,9 @@ function Inbox() {
                           message.kind === "bot" && "border-message-bot bg-message-bot text-message-bot-foreground",
                           message.kind === "agent" && "border-message-agent bg-message-agent text-message-agent-foreground",
                         )}>
-                          <p className="whitespace-pre-wrap break-words">{message.text}</p>
+                          <p className="whitespace-pre-wrap break-words">
+                            <Linkify text={message.text} />
+                          </p>
                           <span className={cn("self-end text-[9px]", message.kind === "citizen" ? "text-muted-foreground" : "opacity-75")}>{formatClock(message.timestamp)}</span>
                         </MessageContent>
                       </Message>

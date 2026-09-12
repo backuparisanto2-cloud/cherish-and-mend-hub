@@ -160,16 +160,19 @@ export async function handleChateraWebhook(request: Request): Promise<Response> 
   let conversationStatus: string | null = null;
   let currentMenuPath: string | null = null;
   let awaitingOperatorConfirmation = false;
+  let language: "id" | "en" = "id";
   if (inbound?.senderPhone && inbound.conversationId) {
     const { data: conversationRow } = await supabaseAdmin
       .from("conversations")
-      .select("status, current_menu_path, awaiting_operator_confirmation")
+      .select("status, current_menu_path, awaiting_operator_confirmation, language")
       .eq("chatera_conversation_id", inbound.conversationId)
       .maybeSingle();
     conversationStatus = conversationRow?.status ?? null;
     currentMenuPath = conversationRow?.current_menu_path ?? null;
     awaitingOperatorConfirmation =
       conversationRow?.awaiting_operator_confirmation ?? false;
+    language =
+      (conversationRow as { language?: string | null } | null)?.language === "en" ? "en" : "id";
 
     // Warga membalas setelah percakapan ditutup -> buka lagi untuk bot.
     if (conversationStatus === "closed") {
@@ -191,14 +194,32 @@ export async function handleChateraWebhook(request: Request): Promise<Response> 
     Boolean(inbound?.senderPhone) &&
     conversationStatus !== "agent_active" &&
     conversationStatus !== "waiting_agent";
+  let languageNotice: string | null = null;
   if (inbound?.senderPhone && botShouldReply) {
-    const { resolveReply, sendBotReply, sendBotMessages, isAffirmativeReply, AGENT_REPLY, WAIT_NOTICE } =
+    const { resolveReply, sendBotReply, sendBotMessages, localizedMainMenu } =
       await import("@/lib/chatera-bot.server");
+    const { botStrings, detectLanguageCommand, isAffirmativeIn, languageSwitchNotice } =
+      await import("@/lib/bot-language");
+
+    // Perintah bahasa: simpan pilihan warga, lalu jawab dalam bahasa tersebut.
+    const requested = detectLanguageCommand(inbound.text);
+    if (requested && requested !== language && inbound.conversationId) {
+      language = requested;
+      languageNotice = languageSwitchNotice(requested);
+      await supabaseAdmin
+        .from("conversations")
+        .update({ language: requested })
+        .eq("chatera_conversation_id", inbound.conversationId);
+    } else if (requested) {
+      languageNotice = languageSwitchNotice(requested);
+    }
 
     // Balasan "ya" tepat setelah pesan tidak ditemukan = setuju disambungkan
     // ke petugas. Balasan lain membatalkan penanda dan diproses seperti biasa.
     const confirmedOperator =
-      awaitingOperatorConfirmation && isAffirmativeReply(inbound.text);
+      awaitingOperatorConfirmation && isAffirmativeIn(inbound.text);
+    const AGENT_REPLY = botStrings(language).agentReply;
+    const WAIT_NOTICE = botStrings(language).waitNotice;
 
     // Nama WhatsApp warga untuk sapaan personal (payload -> fallback kontak).
     let senderName: string | null = data.sender?.name ?? null;
@@ -220,8 +241,18 @@ export async function handleChateraWebhook(request: Request): Promise<Response> 
     };
     if (confirmedOperator) {
       result = { messages: [AGENT_REPLY], escalate: true, matchedCategory: null, menuPath: undefined, notFound: false };
+    } else if (languageNotice) {
+      // Perintah bahasa dijawab konfirmasi + menu utama dalam bahasa baru.
+      const menu = await localizedMainMenu(language);
+      result = {
+        messages: [languageNotice, menu],
+        escalate: false,
+        matchedCategory: null,
+        menuPath: null,
+        notFound: false,
+      };
     } else {
-      const pending = resolveReply(inbound.text, currentMenuPath, senderName);
+      const pending = resolveReply(inbound.text, currentMenuPath, senderName, language);
       // Kalau jawaban belum siap dalam 3 detik, warga lebih dulu diberi kabar
       // supaya tidak merasa dibiarkan menunggu.
       const race = await Promise.race([

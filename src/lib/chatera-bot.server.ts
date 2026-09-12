@@ -2,6 +2,14 @@
 // Server-only. Menu angka dijawab dari naskah resmi; kalimat bebas dijawab AI + Knowledge Base.
 
 import { PURWOREJO_CONTENT } from "./purworejo-content";
+import {
+  botStrings,
+  languageFooter,
+  toBotLanguage,
+  type BotLanguage,
+} from "./bot-language";
+import { translateBotText } from "./bot-translate.server";
+import { toWhatsAppText } from "./whatsapp-format";
 
 const CHATERA_BASE_URL = "https://api.chatera.id/v1";
 
@@ -41,13 +49,7 @@ const RESET_COMMANDS = new Set([
   "restart",
 ]);
 
-export const HELP_REPLY =
-  "❓ *Bantuan*\n\n" +
-  "Balas dengan angka yang tertera untuk memilih layanan. Anda juga bisa mengetik pertanyaan dengan kalimat biasa.\n\n" +
-  "Ketik *0* atau *Mulai ulang* untuk kembali ke awal, atau ketik *7* untuk berbicara dengan petugas.";
-
-const UNKNOWN_PREFIX =
-  "Maaf, pilihan tidak dikenali. Silakan pilih salah satu menu berikut.\n\n";
+export const HELP_REPLY = botStrings("id").help;
 
 /** Normalisasi input warga menjadi kunci menu, mis. "3 . 10 . 1" -> "3.10.1". */
 function toMenuKey(text: string): string {
@@ -121,7 +123,9 @@ function show(key: string): AutoReply {
 export function resolveAutoReply(
   text: string | null | undefined,
   currentMenuPath: string | null = null,
+  language: BotLanguage = "id",
 ): AutoReply {
+  const unknownPrefix = botStrings(toBotLanguage(language)).unknownPrefix;
   const normalized = (text ?? "").trim().toLowerCase();
   if (HELP_COMMANDS.has(normalized)) {
     return { reply: HELP_REPLY, menuPath: currentMenuPath };
@@ -146,9 +150,9 @@ export function resolveAutoReply(
 
   // 3. Tidak dikenali: tampilkan ulang layar yang sedang aktif, tanpa menebak.
   if (current) {
-    return { reply: UNKNOWN_PREFIX + relativizeMenu(PURWOREJO_CONTENT[current]!), menuPath: current };
+    return { reply: unknownPrefix + relativizeMenu(PURWOREJO_CONTENT[current]!), menuPath: current };
   }
-  return { reply: UNKNOWN_PREFIX + MAIN_MENU, menuPath: null };
+  return { reply: unknownPrefix + MAIN_MENU, menuPath: null };
 }
 
 
@@ -267,21 +271,24 @@ async function loadActiveKbEntries(): Promise<KbEntry[]> {
 /** Cari jawaban di knowledge_base berdasarkan skoring kata kunci. */
 export async function resolveKnowledgeReply(
   text: string,
+  language: BotLanguage = "id",
 ): Promise<{
   reply: string;
   escalate: boolean;
   matchedCategory?: string | null;
   notFound?: boolean;
 }> {
+  const lang = toBotLanguage(language);
+  const strings = botStrings(lang);
   const tokens = tokenize(text);
-  if (tokens.length === 0) return { reply: NOT_FOUND_REPLY, escalate: false, notFound: true };
+  if (tokens.length === 0) return { reply: strings.notFound, escalate: false, notFound: true };
 
   let entries: KbEntry[] = [];
   try {
     entries = await loadActiveKbEntries();
   } catch (err) {
     console.error("Gagal memuat knowledge_base", err);
-    return { reply: NOT_FOUND_REPLY, escalate: true };
+    return { reply: strings.notFound, escalate: true };
   }
 
   const scored = entries
@@ -293,28 +300,27 @@ export async function resolveKnowledgeReply(
     // Hanya pesan ambigu satu kata bermakna yang dianggap sapaan -> menu utama.
     // Pesan 2+ kata bermakna yang tidak cocok KB mana pun dapat jawaban
     // "tidak ditemukan" yang singkat, bukan banner menu utama berulang.
-    if (tokens.length <= 1) return { reply: MAIN_MENU, escalate: false };
-    return { reply: NOT_FOUND_REPLY, escalate: false, notFound: true };
+    if (tokens.length <= 1) {
+      const menu = await translateBotText(MAIN_MENU, lang, "menu:utama");
+      return { reply: menu + languageFooter(lang), escalate: false };
+    }
+    return { reply: strings.notFound, escalate: false, notFound: true };
   }
 
   const top = scored[0]!;
   const close = scored.filter((s) => top.score - s.score <= 1).slice(0, 3);
 
   if (close.length > 1) {
-    const options = close
-      .map((s, i) => `${i + 1}. ${s.entry.title}`)
-      .join("\n");
+    const options = close.map((s, i) => `${i + 1}. ${s.entry.title}`).join("\n");
     return {
-      reply:
-        "Ada beberapa informasi yang mungkin sesuai dengan pertanyaan Anda:\n\n" +
-        options +
-        "\n\nSilakan balas dengan nomor pilihan di atas atau ketik kata kunci yang lebih spesifik.",
+      reply: `${strings.kbOptionsIntro}\n\n${options}\n\n${strings.kbOptionsOutro}`,
       escalate: false,
     };
   }
 
+  const answer = await translateBotText(top.entry.answer, lang, `kb:${top.entry.title}`);
   return {
-    reply: `Berikut informasi terkait pertanyaan Anda:\n\n${top.entry.answer}`,
+    reply: `${strings.kbIntro}\n\n${answer}`,
     escalate: false,
     matchedCategory: top.entry.category ?? null,
   };
@@ -343,6 +349,14 @@ const AI_SYSTEM_PROMPT =
   AI_PERSONA +
   " Jawab HANYA berdasarkan informasi yang diberikan, singkat (di bawah 500 karakter). " +
   "Kalau info tidak tersedia, katakan akan disambungkan ke petugas.";
+
+/** Aturan tambahan saat warga memilih bahasa Inggris. */
+const AI_ENGLISH_RULES =
+  "ANSWER IN NATURAL ENGLISH. Keep the Indonesian name of every government document, " +
+  "institution, programme, and service exactly as written (KTP, Kartu Keluarga, KIA, " +
+  "Akta Kelahiran, NIK, PBB, Dukcapil, Puskesmas, RSUD, DPMPTSP, PORJO, Kecamatan, Desa), " +
+  "and add the English meaning in brackets on the FIRST mention only, e.g. " +
+  "\"Kartu Keluarga (Family Card)\". Keep URLs, emails, and phone numbers unchanged.";
 
 export type BotEngine = "keyword" | "ai_external";
 
@@ -398,7 +412,10 @@ async function pickModel(apiKey: string): Promise<string | null> {
  * Jawab pertanyaan bebas memakai AI eksternal dengan konteks Knowledge Base terpilih.
  * Gagal/timeout apa pun -> otomatis fallback ke pencarian kata kunci.
  */
-export async function resolveAiReply(text: string): Promise<{
+export async function resolveAiReply(
+  text: string,
+  language: BotLanguage = "id",
+): Promise<{
   reply: string;
   escalate: boolean;
   matchedCategory?: string | null;
@@ -407,7 +424,7 @@ export async function resolveAiReply(text: string): Promise<{
   const apiKey = process.env["JTG_AI_API_KEY"];
   if (!apiKey) {
     console.error("JTG_AI_API_KEY belum diatur, fallback ke pencarian kata kunci");
-    return resolveKnowledgeReply(text);
+    return resolveKnowledgeReply(text, language);
   }
 
   try {
@@ -432,7 +449,12 @@ export async function resolveAiReply(text: string): Promise<{
         body: JSON.stringify({
           model,
           messages: [
-            { role: "system", content: `${AI_SYSTEM_PROMPT}\n\nInformasi resmi:\n${context}` },
+            {
+              role: "system",
+              content:
+                `${AI_SYSTEM_PROMPT}${language === "en" ? `\n\n${AI_ENGLISH_RULES}` : ""}` +
+                `\n\nInformasi resmi:\n${context}`,
+            },
             { role: "user", content: text },
           ],
           stream: false,
@@ -455,7 +477,7 @@ export async function resolveAiReply(text: string): Promise<{
     };
   } catch (err) {
     console.error("AI eksternal gagal, fallback ke kata kunci", err);
-    return resolveKnowledgeReply(text);
+    return resolveKnowledgeReply(text, language);
   }
 }
 
@@ -506,7 +528,20 @@ function timeOfDay(now = new Date()): "pagi" | "siang" | "sore" | "malam" {
   return "malam";
 }
 
-function fallbackGreeting(name: string | null): string {
+const TIME_OF_DAY_EN: Record<string, string> = {
+  pagi: "morning",
+  siang: "day",
+  sore: "afternoon",
+  malam: "evening",
+};
+
+function fallbackGreeting(name: string | null, language: BotLanguage = "id"): string {
+  if (language === "en") {
+    const part = TIME_OF_DAY_EN[timeOfDay()] ?? "day";
+    return name
+      ? `Good ${part}, ${name}. How may I help you today?`
+      : `Hello and good ${part}. I am ready to help—what service do you need?`;
+  }
   const sapaan = `Selamat ${timeOfDay()}`;
   return name
     ? `${sapaan}, ${name}. Ada yang bisa saya bantu hari ini?`
@@ -514,10 +549,13 @@ function fallbackGreeting(name: string | null): string {
 }
 
 /** Sapaan personal singkat dari AI; gagal/timeout -> sapaan siap-pakai. */
-export async function resolveGreeting(name: string | null | undefined): Promise<string> {
+export async function resolveGreeting(
+  name: string | null | undefined,
+  language: BotLanguage = "id",
+): Promise<string> {
   const displayName = toDisplayName(name);
   const apiKey = process.env["JTG_AI_API_KEY"];
-  if (!apiKey) return fallbackGreeting(displayName);
+  if (!apiKey) return fallbackGreeting(displayName, language);
 
   try {
     const model = await pickModel(apiKey);
@@ -537,7 +575,10 @@ export async function resolveGreeting(name: string | null | undefined): Promise<
                 "Kamu asisten chatbot resmi layanan publik Pemerintah Kabupaten Purworejo. " +
                 AI_PERSONA +
                 " Tugasmu sekarang HANYA menulis satu sapaan pembuka, maksimal dua kalimat pendek, " +
-                "tanpa daftar menu, tanpa emoji berlebihan, tanpa tanda kutip.",
+                "tanpa daftar menu, tanpa emoji berlebihan, tanpa tanda kutip." +
+                (language === "en"
+                  ? " TULIS SAPAAN DALAM BAHASA INGGRIS yang natural dan sopan."
+                  : ""),
             },
             {
               role: "user",
@@ -564,8 +605,14 @@ export async function resolveGreeting(name: string | null | undefined): Promise<
     return answer;
   } catch (err) {
     console.error("Sapaan AI gagal, memakai sapaan bawaan", err);
-    return fallbackGreeting(displayName);
+    return fallbackGreeting(displayName, language);
   }
+}
+
+/** Menu utama sesuai bahasa percakapan + baris pilihan bahasa. */
+export async function localizedMainMenu(language: BotLanguage): Promise<string> {
+  const body = await translateBotText(MAIN_MENU, language, "menu:utama");
+  return body + languageFooter(language);
 }
 
 /** Pilih balasan: menu angka seperti semula, selain itu cari di Knowledge Base. */
@@ -573,6 +620,7 @@ export async function resolveReply(
   text: string | null | undefined,
   currentMenuPath: string | null = null,
   senderName: string | null = null,
+  language: BotLanguage = "id",
 ): Promise<{
   messages: string[];
   reply: string;
@@ -581,23 +629,22 @@ export async function resolveReply(
   menuPath?: string | null | undefined;
   notFound?: boolean;
 }> {
+  const lang = toBotLanguage(language);
+  const strings = botStrings(lang);
+
   if (needsAgent(text)) {
-    return { messages: [AGENT_REPLY], reply: AGENT_REPLY, escalate: true };
+    return { messages: [strings.agentReply], reply: strings.agentReply, escalate: true };
   }
 
   if (isStartOverRequest(text)) {
-    return {
-      messages: [MAIN_MENU],
-      reply: MAIN_MENU,
-      escalate: false,
-      menuPath: null,
-    };
+    const menu = await localizedMainMenu(lang);
+    return { messages: [menu], reply: menu, escalate: false, menuPath: null };
   }
 
   if (isHelpRequest(text)) {
     return {
-      messages: [HELP_REPLY],
-      reply: HELP_REPLY,
+      messages: [strings.help],
+      reply: strings.help,
       escalate: false,
       menuPath: currentMenuPath,
     };
@@ -605,13 +652,9 @@ export async function resolveReply(
 
   // Sapaan pembuka: satu pesan sapaan personal, lalu menu layanan menyusul.
   if (isGreeting(text)) {
-    const greeting = await resolveGreeting(senderName);
-    return {
-      messages: [greeting, MAIN_MENU],
-      reply: MAIN_MENU,
-      escalate: false,
-      menuPath: null,
-    };
+    const greeting = await resolveGreeting(senderName, lang);
+    const menu = await localizedMainMenu(lang);
+    return { messages: [greeting, menu], reply: menu, escalate: false, menuPath: null };
   }
 
   let result: {
@@ -622,8 +665,17 @@ export async function resolveReply(
     notFound?: boolean;
   };
   if (isMenuInput(text, currentMenuPath)) {
-    const { reply, menuPath } = resolveAutoReply(text, currentMenuPath);
-    result = { reply, escalate: false, menuPath };
+    const { reply, menuPath } = resolveAutoReply(text, currentMenuPath, lang);
+    const unknown = reply.startsWith(strings.unknownPrefix);
+    const core = unknown ? reply.slice(strings.unknownPrefix.length) : reply;
+    const prefix = unknown ? strings.unknownPrefix : "";
+    if (core === MAIN_MENU) {
+      const menu = await localizedMainMenu(lang);
+      result = { reply: prefix + menu, escalate: false, menuPath: null };
+    } else {
+      const body = await translateBotText(core, lang, menuPath ? `menu:${menuPath}` : null);
+      result = { reply: prefix + body, escalate: false, menuPath };
+    }
   } else {
     const question = (text ?? "").trim();
     const engine = await getBotEngine();
@@ -632,15 +684,11 @@ export async function resolveReply(
     const atMainMenu = !currentMenuPath;
     result =
       engine === "ai_external" || atMainMenu
-        ? await resolveAiReply(question)
-        : await resolveKnowledgeReply(question);
+        ? await resolveAiReply(question, lang)
+        : await resolveKnowledgeReply(question, lang);
   }
 
-  // Satu titik reset bersama: SETIAP balasan yang memuat menu utama (perintah
-  // eksplisit, sapaan, maupun fallback pesan tidak dikenali) mengosongkan posisi
-  // menu, supaya nomor pendek berikutnya diartikan terhadap menu utama.
-  const menuPath = result.reply.includes(MAIN_MENU) ? null : result.menuPath;
-  return { ...result, messages: [result.reply], menuPath };
+  return { ...result, messages: [result.reply] };
 }
 
 /** Kirim pesan penutup/survei sekali saja untuk percakapan yang sudah ditutup. */
@@ -650,7 +698,7 @@ export async function sendClosingSurvey(chateraConversationId: string | null): P
 
   const { data: conversation } = await supabaseAdmin
     .from("conversations")
-    .select("id, contact_id, survey_sent_at")
+    .select("id, contact_id, survey_sent_at, language")
     .eq("chatera_conversation_id", chateraConversationId)
     .maybeSingle();
   if (!conversation || conversation.survey_sent_at || !conversation.contact_id) return;
@@ -672,9 +720,13 @@ export async function sendClosingSurvey(chateraConversationId: string | null): P
     .select("id");
   if (!claimed || claimed.length === 0) return;
 
+  const language = toBotLanguage(
+    (conversation as { language?: string | null }).language ?? null,
+  );
+
   await sendBotReply({
     to: phone,
-    text: CLOSING_SURVEY_TEXT,
+    text: botStrings(language).closingSurvey,
     conversationId: chateraConversationId,
     channelId: contact?.channel_id ?? null,
   });
@@ -708,6 +760,7 @@ const SERVICE_MENU_INTERACTIVE = {
           { id: "6", title: "6. CCTV Purworejo", description: "Pantau CCTV publik melalui Lekjo" },
           { id: "7", title: "7. Hubungi Operator", description: "Bicara dengan petugas layanan" },
           { id: "8", title: "8. Bantuan", description: "Panduan memilih dan memakai layanan" },
+          { id: "9", title: "9. English", description: "Switch this chat to English" },
           { id: "0", title: "0. Mulai Ulang", description: "Kembali ke menu layanan awal" },
         ],
       },
@@ -715,33 +768,37 @@ const SERVICE_MENU_INTERACTIVE = {
   },
 } as const;
 
-function outboundBody(ctx: SendContext): Record<string, unknown> {
+function outboundBody(ctx: SendContext, isMainMenu: boolean): Record<string, unknown> {
   const channel = ctx.channelId ? { channel_id: ctx.channelId } : {};
-  if (ctx.text === MAIN_MENU) {
+  if (isMainMenu) {
     return { type: "interactive", to: ctx.to, ...channel, interactive: SERVICE_MENU_INTERACTIVE };
   }
   return { type: "text", to: ctx.to, ...channel, text: { body: ctx.text } };
 }
 
 /** Kirim balasan lewat Chatera API lalu simpan sebagai pesan outbound. */
-export async function sendBotReply(ctx: SendContext): Promise<void> {
+export async function sendBotReply(context: SendContext): Promise<void> {
   const apiKey = process.env["CHATERA_API_KEY"];
   if (!apiKey) {
     console.error("CHATERA_API_KEY belum diatur, auto-reply dilewati");
     return;
   }
 
+  // Semua teks keluar dinormalkan agar tautan, email, dan nomor telepon aktif.
+  const isMainMenu = context.text.startsWith(MAIN_MENU);
+  const ctx: SendContext = { ...context, text: toWhatsAppText(context.text) };
+
   let messageId: string | null = null;
   try {
     let response = await fetch(`${CHATERA_BASE_URL}/whatsapp/messages`, {
       method: "POST",
       headers: { "content-type": "application/json", authorization: `Bearer ${apiKey}` },
-      body: JSON.stringify(outboundBody(ctx)),
+      body: JSON.stringify(outboundBody(ctx, isMainMenu)),
     });
     let raw = await response.text();
     // Jika pesan interaktif ditolak oleh kanal lama, menu teks tetap dikirim agar
     // warga tidak kehilangan navigasi.
-    if (!response.ok && ctx.text === MAIN_MENU) {
+    if (!response.ok && isMainMenu) {
       response = await fetch(`${CHATERA_BASE_URL}/whatsapp/messages`, {
         method: "POST",
         headers: { "content-type": "application/json", authorization: `Bearer ${apiKey}` },
