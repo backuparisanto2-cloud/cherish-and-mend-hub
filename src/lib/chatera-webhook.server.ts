@@ -160,16 +160,19 @@ export async function handleChateraWebhook(request: Request): Promise<Response> 
   let conversationStatus: string | null = null;
   let currentMenuPath: string | null = null;
   let awaitingOperatorConfirmation = false;
+  let language: "id" | "en" = "id";
   if (inbound?.senderPhone && inbound.conversationId) {
     const { data: conversationRow } = await supabaseAdmin
       .from("conversations")
-      .select("status, current_menu_path, awaiting_operator_confirmation")
+      .select("status, current_menu_path, awaiting_operator_confirmation, language")
       .eq("chatera_conversation_id", inbound.conversationId)
       .maybeSingle();
     conversationStatus = conversationRow?.status ?? null;
     currentMenuPath = conversationRow?.current_menu_path ?? null;
     awaitingOperatorConfirmation =
       conversationRow?.awaiting_operator_confirmation ?? false;
+    language =
+      (conversationRow as { language?: string | null } | null)?.language === "en" ? "en" : "id";
 
     // Warga membalas setelah percakapan ditutup -> buka lagi untuk bot.
     if (conversationStatus === "closed") {
