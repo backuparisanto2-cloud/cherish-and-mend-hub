@@ -2,6 +2,14 @@
 // Server-only. Menu angka dijawab dari naskah resmi; kalimat bebas dijawab AI + Knowledge Base.
 
 import { PURWOREJO_CONTENT } from "./purworejo-content";
+import {
+  botStrings,
+  languageFooter,
+  toBotLanguage,
+  type BotLanguage,
+} from "./bot-language";
+import { translateBotText } from "./bot-translate.server";
+import { toWhatsAppText } from "./whatsapp-format";
 
 const CHATERA_BASE_URL = "https://api.chatera.id/v1";
 
