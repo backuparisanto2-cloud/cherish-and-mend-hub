@@ -47,6 +47,36 @@ export type Database = {
         }
         Relationships: []
       }
+      bot_menu_translations: {
+        Row: {
+          body: string
+          created_at: string
+          id: string
+          language: string
+          menu_path: string
+          source_hash: string
+          updated_at: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          id?: string
+          language: string
+          menu_path: string
+          source_hash: string
+          updated_at?: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          id?: string
+          language?: string
+          menu_path?: string
+          source_hash?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       bot_menus: {
         Row: {
           body: string
@@ -233,6 +263,7 @@ export type Database = {
           created_at: string
           current_menu_path: string | null
           id: string
+          language: string
           last_message_at: string
           status: Database["public"]["Enums"]["conversation_status"]
           survey_sent_at: string | null
@@ -247,6 +278,7 @@ export type Database = {
           created_at?: string
           current_menu_path?: string | null
           id?: string
+          language?: string
           last_message_at?: string
           status?: Database["public"]["Enums"]["conversation_status"]
           survey_sent_at?: string | null
@@ -261,6 +293,7 @@ export type Database = {
           created_at?: string
           current_menu_path?: string | null
           id?: string
+          language?: string
           last_message_at?: string
           status?: Database["public"]["Enums"]["conversation_status"]
           survey_sent_at?: string | null
