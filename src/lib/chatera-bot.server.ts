@@ -680,9 +680,13 @@ export async function sendClosingSurvey(chateraConversationId: string | null): P
     .select("id");
   if (!claimed || claimed.length === 0) return;
 
+  const language = toBotLanguage(
+    (conversation as { language?: string | null }).language ?? null,
+  );
+
   await sendBotReply({
     to: phone,
-    text: CLOSING_SURVEY_TEXT,
+    text: botStrings(language).closingSurvey,
     conversationId: chateraConversationId,
     channelId: contact?.channel_id ?? null,
   });
