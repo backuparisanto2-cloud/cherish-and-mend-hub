@@ -352,6 +352,14 @@ const AI_SYSTEM_PROMPT =
   " Jawab HANYA berdasarkan informasi yang diberikan, singkat (di bawah 500 karakter). " +
   "Kalau info tidak tersedia, katakan akan disambungkan ke petugas.";
 
+/** Aturan tambahan saat warga memilih bahasa Inggris. */
+const AI_ENGLISH_RULES =
+  "ANSWER IN NATURAL ENGLISH. Keep the Indonesian name of every government document, " +
+  "institution, programme, and service exactly as written (KTP, Kartu Keluarga, KIA, " +
+  "Akta Kelahiran, NIK, PBB, Dukcapil, Puskesmas, RSUD, DPMPTSP, PORJO, Kecamatan, Desa), " +
+  "and add the English meaning in brackets on the FIRST mention only, e.g. " +
+  "\"Kartu Keluarga (Family Card)\". Keep URLs, emails, and phone numbers unchanged.";
+
 export type BotEngine = "keyword" | "ai_external";
 
 /** Baca mesin jawaban yang dipilih Owner di halaman Pengaturan. */
