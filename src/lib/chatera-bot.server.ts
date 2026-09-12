@@ -723,33 +723,37 @@ const SERVICE_MENU_INTERACTIVE = {
   },
 } as const;
 
-function outboundBody(ctx: SendContext): Record<string, unknown> {
+function outboundBody(ctx: SendContext, isMainMenu: boolean): Record<string, unknown> {
   const channel = ctx.channelId ? { channel_id: ctx.channelId } : {};
-  if (ctx.text === MAIN_MENU) {
+  if (isMainMenu) {
     return { type: "interactive", to: ctx.to, ...channel, interactive: SERVICE_MENU_INTERACTIVE };
   }
   return { type: "text", to: ctx.to, ...channel, text: { body: ctx.text } };
 }
 
 /** Kirim balasan lewat Chatera API lalu simpan sebagai pesan outbound. */
-export async function sendBotReply(ctx: SendContext): Promise<void> {
+export async function sendBotReply(context: SendContext): Promise<void> {
   const apiKey = process.env["CHATERA_API_KEY"];
   if (!apiKey) {
     console.error("CHATERA_API_KEY belum diatur, auto-reply dilewati");
     return;
   }
 
+  // Semua teks keluar dinormalkan agar tautan, email, dan nomor telepon aktif.
+  const isMainMenu = context.text === MAIN_MENU;
+  const ctx: SendContext = { ...context, text: toWhatsAppText(context.text) };
+
   let messageId: string | null = null;
   try {
     let response = await fetch(`${CHATERA_BASE_URL}/whatsapp/messages`, {
       method: "POST",
       headers: { "content-type": "application/json", authorization: `Bearer ${apiKey}` },
-      body: JSON.stringify(outboundBody(ctx)),
+      body: JSON.stringify(outboundBody(ctx, isMainMenu)),
     });
     let raw = await response.text();
     // Jika pesan interaktif ditolak oleh kanal lama, menu teks tetap dikirim agar
     // warga tidak kehilangan navigasi.
-    if (!response.ok && ctx.text === MAIN_MENU) {
+    if (!response.ok && isMainMenu) {
       response = await fetch(`${CHATERA_BASE_URL}/whatsapp/messages`, {
         method: "POST",
         headers: { "content-type": "application/json", authorization: `Bearer ${apiKey}` },
