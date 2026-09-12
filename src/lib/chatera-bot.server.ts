@@ -275,21 +275,24 @@ async function loadActiveKbEntries(): Promise<KbEntry[]> {
 /** Cari jawaban di knowledge_base berdasarkan skoring kata kunci. */
 export async function resolveKnowledgeReply(
   text: string,
+  language: BotLanguage = "id",
 ): Promise<{
   reply: string;
   escalate: boolean;
   matchedCategory?: string | null;
   notFound?: boolean;
 }> {
+  const lang = toBotLanguage(language);
+  const strings = botStrings(lang);
   const tokens = tokenize(text);
-  if (tokens.length === 0) return { reply: NOT_FOUND_REPLY, escalate: false, notFound: true };
+  if (tokens.length === 0) return { reply: strings.notFound, escalate: false, notFound: true };
 
   let entries: KbEntry[] = [];
   try {
     entries = await loadActiveKbEntries();
   } catch (err) {
     console.error("Gagal memuat knowledge_base", err);
-    return { reply: NOT_FOUND_REPLY, escalate: true };
+    return { reply: strings.notFound, escalate: true };
   }
 
   const scored = entries
@@ -301,28 +304,27 @@ export async function resolveKnowledgeReply(
     // Hanya pesan ambigu satu kata bermakna yang dianggap sapaan -> menu utama.
     // Pesan 2+ kata bermakna yang tidak cocok KB mana pun dapat jawaban
     // "tidak ditemukan" yang singkat, bukan banner menu utama berulang.
-    if (tokens.length <= 1) return { reply: MAIN_MENU, escalate: false };
-    return { reply: NOT_FOUND_REPLY, escalate: false, notFound: true };
+    if (tokens.length <= 1) {
+      const menu = await translateBotText(MAIN_MENU, lang, "menu:utama");
+      return { reply: menu + languageFooter(lang), escalate: false };
+    }
+    return { reply: strings.notFound, escalate: false, notFound: true };
   }
 
   const top = scored[0]!;
   const close = scored.filter((s) => top.score - s.score <= 1).slice(0, 3);
 
   if (close.length > 1) {
-    const options = close
-      .map((s, i) => `${i + 1}. ${s.entry.title}`)
-      .join("\n");
+    const options = close.map((s, i) => `${i + 1}. ${s.entry.title}`).join("\n");
     return {
-      reply:
-        "Ada beberapa informasi yang mungkin sesuai dengan pertanyaan Anda:\n\n" +
-        options +
-        "\n\nSilakan balas dengan nomor pilihan di atas atau ketik kata kunci yang lebih spesifik.",
+      reply: `${strings.kbOptionsIntro}\n\n${options}\n\n${strings.kbOptionsOutro}`,
       escalate: false,
     };
   }
 
+  const answer = await translateBotText(top.entry.answer, lang, `kb:${top.entry.title}`);
   return {
-    reply: `Berikut informasi terkait pertanyaan Anda:\n\n${top.entry.answer}`,
+    reply: `${strings.kbIntro}\n\n${answer}`,
     escalate: false,
     matchedCategory: top.entry.category ?? null,
   };
