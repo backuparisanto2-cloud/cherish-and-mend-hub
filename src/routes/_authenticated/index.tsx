@@ -269,8 +269,17 @@ function Inbox() {
 
         {loadError ? <div className="border-b border-destructive/20 bg-destructive/10 px-5 py-2 text-xs text-destructive">Gagal memuat sebagian data: {loadError.message}</div> : null}
 
-        <div id="inbox" className="flex min-h-0 flex-1 overflow-hidden">
-          <section className={cn("w-full shrink-0 border-r border-border bg-background md:w-[360px] xl:w-[390px]", !mobileListOpen && "hidden md:block")} aria-label="Daftar percakapan">
+        <div id="inbox" className="flex min-h-0 flex-1 gap-4 overflow-hidden p-0 md:p-4">
+          <section className={cn("w-full shrink-0 overflow-hidden border-border bg-background md:w-[360px] md:rounded-md md:border md:border-t-[3px] md:border-t-primary md:shadow-sm xl:w-[390px]", !mobileListOpen && "hidden md:block")} aria-label="Daftar percakapan">
+            <div className="flex h-12 items-center justify-between border-b border-border px-4">
+              <div className="flex min-w-0 items-center gap-2">
+                <MessageCircleMore className="size-4 text-primary" />
+                <h2 className="truncate text-sm font-bold">Daftar Percakapan</h2>
+              </div>
+              <Badge variant="secondary" className="rounded-sm px-2 text-[10px] font-bold">
+                {filteredThreads.length} pesan
+              </Badge>
+            </div>
             <div className="border-b border-border p-4">
               <div className="relative">
                 <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
@@ -291,7 +300,7 @@ function Inbox() {
                 ))}
               </div>
             </div>
-            <div className="flex h-[calc(100%-113px)] flex-col overflow-y-auto">
+            <div className="flex h-[calc(100%-161px)] flex-col overflow-y-auto">
               {filteredThreads.length === 0 ? (
                 <div className="grid flex-1 place-items-center p-8 text-center text-sm text-muted-foreground">Tidak ada percakapan yang cocok.</div>
               ) : filteredThreads.map((thread) => {
@@ -304,8 +313,8 @@ function Inbox() {
                     onClick={() => { setActiveId(thread.id); setMobileListOpen(false); }}
                     className={cn(
                       "relative grid w-full grid-cols-[auto_minmax(0,1fr)] gap-3 border-b border-border px-4 py-3.5 text-left transition-colors",
-                      selected ? "bg-conversation-selected" : "hover:bg-muted/45",
-                      waiting && "border-l-[3px] border-l-status-waiting bg-status-waiting-soft/30",
+                      selected ? "border-l-[3px] border-l-primary bg-conversation-selected" : "hover:bg-muted/45",
+                      waiting && !selected && "border-l-[3px] border-l-status-waiting bg-status-waiting-soft/30",
                     )}
                   >
                     <Avatar className="mt-0.5 size-10 shrink-0 border border-border">
@@ -329,7 +338,7 @@ function Inbox() {
           </section>
 
           {active ? (
-            <section className={cn("min-w-0 flex-1 flex-col bg-chat-canvas", mobileListOpen ? "hidden md:flex" : "flex")} aria-label={`Percakapan dengan ${active.name}`}>
+            <section className={cn("min-w-0 flex-1 flex-col overflow-hidden bg-chat-canvas md:rounded-md md:border md:border-t-[3px] md:border-border md:border-t-primary md:shadow-sm", mobileListOpen ? "hidden md:flex" : "flex")} aria-label={`Percakapan dengan ${active.name}`}>
               <div className="grid min-h-[72px] shrink-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-3 border-b border-border bg-background px-4 py-3 sm:px-5">
                 <div className="flex min-w-0 items-center gap-3">
                   <Button variant="ghost" size="icon" className="shrink-0 md:hidden" onClick={() => setMobileListOpen(true)} aria-label="Kembali ke daftar percakapan">
@@ -409,7 +418,7 @@ function Inbox() {
               </div>
             </section>
           ) : (
-            <div className="hidden flex-1 place-items-center bg-chat-canvas text-sm text-muted-foreground md:grid">
+            <div className="hidden flex-1 place-items-center rounded-md border border-border bg-background text-sm text-muted-foreground shadow-sm md:grid">
               <div className="text-center"><MessageCircleMore className="mx-auto mb-3 size-8" />Pilih percakapan untuk mulai.</div>
             </div>
           )}
