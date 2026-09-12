@@ -514,7 +514,20 @@ function timeOfDay(now = new Date()): "pagi" | "siang" | "sore" | "malam" {
   return "malam";
 }
 
-function fallbackGreeting(name: string | null): string {
+const TIME_OF_DAY_EN: Record<string, string> = {
+  pagi: "morning",
+  siang: "day",
+  sore: "afternoon",
+  malam: "evening",
+};
+
+function fallbackGreeting(name: string | null, language: BotLanguage = "id"): string {
+  if (language === "en") {
+    const part = TIME_OF_DAY_EN[timeOfDay()] ?? "day";
+    return name
+      ? `Good ${part}, ${name}. How may I help you today?`
+      : `Hello and good ${part}. I am ready to help—what service do you need?`;
+  }
   const sapaan = `Selamat ${timeOfDay()}`;
   return name
     ? `${sapaan}, ${name}. Ada yang bisa saya bantu hari ini?`
@@ -522,10 +535,13 @@ function fallbackGreeting(name: string | null): string {
 }
 
 /** Sapaan personal singkat dari AI; gagal/timeout -> sapaan siap-pakai. */
-export async function resolveGreeting(name: string | null | undefined): Promise<string> {
+export async function resolveGreeting(
+  name: string | null | undefined,
+  language: BotLanguage = "id",
+): Promise<string> {
   const displayName = toDisplayName(name);
   const apiKey = process.env["JTG_AI_API_KEY"];
-  if (!apiKey) return fallbackGreeting(displayName);
+  if (!apiKey) return fallbackGreeting(displayName, language);
 
   try {
     const model = await pickModel(apiKey);
