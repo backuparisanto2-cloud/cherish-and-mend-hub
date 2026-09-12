@@ -49,13 +49,7 @@ const RESET_COMMANDS = new Set([
   "restart",
 ]);
 
-export const HELP_REPLY =
-  "❓ *Bantuan*\n\n" +
-  "Balas dengan angka yang tertera untuk memilih layanan. Anda juga bisa mengetik pertanyaan dengan kalimat biasa.\n\n" +
-  "Ketik *0* atau *Mulai ulang* untuk kembali ke awal, atau ketik *7* untuk berbicara dengan petugas.";
-
-const UNKNOWN_PREFIX =
-  "Maaf, pilihan tidak dikenali. Silakan pilih salah satu menu berikut.\n\n";
+export const HELP_REPLY = botStrings("id").help;
 
 /** Normalisasi input warga menjadi kunci menu, mis. "3 . 10 . 1" -> "3.10.1". */
 function toMenuKey(text: string): string {
