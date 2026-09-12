@@ -241,8 +241,18 @@ export async function handleChateraWebhook(request: Request): Promise<Response> 
     };
     if (confirmedOperator) {
       result = { messages: [AGENT_REPLY], escalate: true, matchedCategory: null, menuPath: undefined, notFound: false };
+    } else if (languageNotice) {
+      // Perintah bahasa dijawab konfirmasi + menu utama dalam bahasa baru.
+      const menu = await localizedMainMenu(language);
+      result = {
+        messages: [languageNotice, menu],
+        escalate: false,
+        matchedCategory: null,
+        menuPath: null,
+        notFound: false,
+      };
     } else {
-      const pending = resolveReply(inbound.text, currentMenuPath, senderName);
+      const pending = resolveReply(inbound.text, currentMenuPath, senderName, language);
       // Kalau jawaban belum siap dalam 3 detik, warga lebih dulu diberi kabar
       // supaya tidak merasa dibiarkan menunggu.
       const race = await Promise.race([
