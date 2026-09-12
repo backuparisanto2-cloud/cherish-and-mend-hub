@@ -270,7 +270,7 @@ function Inbox() {
         {loadError ? <div className="border-b border-destructive/20 bg-destructive/10 px-5 py-2 text-xs text-destructive">Gagal memuat sebagian data: {loadError.message}</div> : null}
 
         <div id="inbox" className="flex min-h-0 flex-1 gap-4 overflow-hidden p-0 md:p-4">
-          <section className={cn("w-full shrink-0 overflow-hidden border-border bg-background md:w-[360px] md:rounded-md md:border md:shadow-sm xl:w-[390px]", !mobileListOpen && "hidden md:block")} aria-label="Daftar percakapan">
+          <section className={cn("w-full shrink-0 overflow-hidden border-border bg-background md:w-[360px] md:rounded-md md:border md:border-t-[3px] md:border-t-primary md:shadow-sm xl:w-[390px]", !mobileListOpen && "hidden md:block")} aria-label="Daftar percakapan">
             <div className="flex h-12 items-center justify-between border-b border-border px-4">
               <div className="flex min-w-0 items-center gap-2">
                 <MessageCircleMore className="size-4 text-primary" />
@@ -338,7 +338,7 @@ function Inbox() {
           </section>
 
           {active ? (
-            <section className={cn("min-w-0 flex-1 flex-col overflow-hidden bg-chat-canvas md:rounded-md md:border md:border-border md:shadow-sm", mobileListOpen ? "hidden md:flex" : "flex")} aria-label={`Percakapan dengan ${active.name}`}>
+            <section className={cn("min-w-0 flex-1 flex-col overflow-hidden bg-chat-canvas md:rounded-md md:border md:border-t-[3px] md:border-border md:border-t-primary md:shadow-sm", mobileListOpen ? "hidden md:flex" : "flex")} aria-label={`Percakapan dengan ${active.name}`}>
               <div className="grid min-h-[72px] shrink-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-3 border-b border-border bg-background px-4 py-3 sm:px-5">
                 <div className="flex min-w-0 items-center gap-3">
                   <Button variant="ghost" size="icon" className="shrink-0 md:hidden" onClick={() => setMobileListOpen(true)} aria-label="Kembali ke daftar percakapan">
