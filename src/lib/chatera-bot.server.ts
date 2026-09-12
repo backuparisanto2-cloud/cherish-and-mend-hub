@@ -156,9 +156,9 @@ export function resolveAutoReply(
 
   // 3. Tidak dikenali: tampilkan ulang layar yang sedang aktif, tanpa menebak.
   if (current) {
-    return { reply: UNKNOWN_PREFIX + relativizeMenu(PURWOREJO_CONTENT[current]!), menuPath: current };
+    return { reply: unknownPrefix + relativizeMenu(PURWOREJO_CONTENT[current]!), menuPath: current };
   }
-  return { reply: UNKNOWN_PREFIX + MAIN_MENU, menuPath: null };
+  return { reply: unknownPrefix + MAIN_MENU, menuPath: null };
 }
 
 
