@@ -760,6 +760,7 @@ const SERVICE_MENU_INTERACTIVE = {
           { id: "6", title: "6. CCTV Purworejo", description: "Pantau CCTV publik melalui Lekjo" },
           { id: "7", title: "7. Hubungi Operator", description: "Bicara dengan petugas layanan" },
           { id: "8", title: "8. Bantuan", description: "Panduan memilih dan memakai layanan" },
+          { id: "9", title: "9. English", description: "Switch this chat to English" },
           { id: "0", title: "0. Mulai Ulang", description: "Kembali ke menu layanan awal" },
         ],
       },
