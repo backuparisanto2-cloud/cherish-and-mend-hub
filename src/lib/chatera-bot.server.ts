@@ -576,11 +576,18 @@ export async function resolveGreeting(name: string | null | undefined): Promise<
   }
 }
 
+/** Menu utama sesuai bahasa percakapan + baris pilihan bahasa. */
+export async function localizedMainMenu(language: BotLanguage): Promise<string> {
+  const body = await translateBotText(MAIN_MENU, language, "menu:utama");
+  return body + languageFooter(language);
+}
+
 /** Pilih balasan: menu angka seperti semula, selain itu cari di Knowledge Base. */
 export async function resolveReply(
   text: string | null | undefined,
   currentMenuPath: string | null = null,
   senderName: string | null = null,
+  language: BotLanguage = "id",
 ): Promise<{
   messages: string[];
   reply: string;
@@ -589,23 +596,22 @@ export async function resolveReply(
   menuPath?: string | null | undefined;
   notFound?: boolean;
 }> {
+  const lang = toBotLanguage(language);
+  const strings = botStrings(lang);
+
   if (needsAgent(text)) {
-    return { messages: [AGENT_REPLY], reply: AGENT_REPLY, escalate: true };
+    return { messages: [strings.agentReply], reply: strings.agentReply, escalate: true };
   }
 
   if (isStartOverRequest(text)) {
-    return {
-      messages: [MAIN_MENU],
-      reply: MAIN_MENU,
-      escalate: false,
-      menuPath: null,
-    };
+    const menu = await localizedMainMenu(lang);
+    return { messages: [menu], reply: menu, escalate: false, menuPath: null };
   }
 
   if (isHelpRequest(text)) {
     return {
-      messages: [HELP_REPLY],
-      reply: HELP_REPLY,
+      messages: [strings.help],
+      reply: strings.help,
       escalate: false,
       menuPath: currentMenuPath,
     };
@@ -613,13 +619,9 @@ export async function resolveReply(
 
   // Sapaan pembuka: satu pesan sapaan personal, lalu menu layanan menyusul.
   if (isGreeting(text)) {
-    const greeting = await resolveGreeting(senderName);
-    return {
-      messages: [greeting, MAIN_MENU],
-      reply: MAIN_MENU,
-      escalate: false,
-      menuPath: null,
-    };
+    const greeting = await resolveGreeting(senderName, lang);
+    const menu = await localizedMainMenu(lang);
+    return { messages: [greeting, menu], reply: menu, escalate: false, menuPath: null };
   }
 
   let result: {
@@ -630,8 +632,17 @@ export async function resolveReply(
     notFound?: boolean;
   };
   if (isMenuInput(text, currentMenuPath)) {
-    const { reply, menuPath } = resolveAutoReply(text, currentMenuPath);
-    result = { reply, escalate: false, menuPath };
+    const { reply, menuPath } = resolveAutoReply(text, currentMenuPath, lang);
+    const unknown = reply.startsWith(strings.unknownPrefix);
+    const core = unknown ? reply.slice(strings.unknownPrefix.length) : reply;
+    const prefix = unknown ? strings.unknownPrefix : "";
+    if (core === MAIN_MENU) {
+      const menu = await localizedMainMenu(lang);
+      result = { reply: prefix + menu, escalate: false, menuPath: null };
+    } else {
+      const body = await translateBotText(core, lang, menuPath ? `menu:${menuPath}` : null);
+      result = { reply: prefix + body, escalate: false, menuPath };
+    }
   } else {
     const question = (text ?? "").trim();
     const engine = await getBotEngine();
@@ -640,15 +651,11 @@ export async function resolveReply(
     const atMainMenu = !currentMenuPath;
     result =
       engine === "ai_external" || atMainMenu
-        ? await resolveAiReply(question)
-        : await resolveKnowledgeReply(question);
+        ? await resolveAiReply(question, lang)
+        : await resolveKnowledgeReply(question, lang);
   }
 
-  // Satu titik reset bersama: SETIAP balasan yang memuat menu utama (perintah
-  // eksplisit, sapaan, maupun fallback pesan tidak dikenali) mengosongkan posisi
-  // menu, supaya nomor pendek berikutnya diartikan terhadap menu utama.
-  const menuPath = result.reply.includes(MAIN_MENU) ? null : result.menuPath;
-  return { ...result, messages: [result.reply], menuPath };
+  return { ...result, messages: [result.reply] };
 }
 
 /** Kirim pesan penutup/survei sekali saja untuk percakapan yang sudah ditutup. */
