@@ -1,0 +1,2 @@
+ALTER TABLE public.messages ADD COLUMN IF NOT EXISTS matched_knowledge_category text;
+CREATE INDEX IF NOT EXISTS messages_matched_knowledge_category_idx ON public.messages (matched_knowledge_category) WHERE matched_knowledge_category IS NOT NULL;

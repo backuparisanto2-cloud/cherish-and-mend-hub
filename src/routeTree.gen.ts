@@ -9,50 +9,294 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
+import { Route as AuthenticatedExportRouteImport } from './routes/_authenticated/export'
+import { Route as AuthenticatedKnowledgeBaseRouteImport } from './routes/_authenticated/knowledge-base'
+import { Route as AuthenticatedMenuBotRouteImport } from './routes/_authenticated/menu-bot'
+import { Route as AuthenticatedPengaturanRouteImport } from './routes/_authenticated/pengaturan'
+import { Route as AuthenticatedSetupChateraRouteImport } from './routes/_authenticated/setup-chatera'
+import { Route as AuthenticatedStatistikRouteImport } from './routes/_authenticated/statistik'
+import { Route as ApiWebhooksChateraRouteImport } from './routes/api/webhooks/chatera'
+import { Route as ApiPublicHooksAutoCloseConversationsRouteImport } from './routes/api/public/hooks/auto-close-conversations'
+import { Route as ApiPublicWebhooksChateraRouteImport } from './routes/api/public/webhooks/chatera'
 
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedIndexRoute = AuthenticatedIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedExportRoute = AuthenticatedExportRouteImport.update({
+  id: '/export',
+  path: '/export',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedKnowledgeBaseRoute =
+  AuthenticatedKnowledgeBaseRouteImport.update({
+    id: '/knowledge-base',
+    path: '/knowledge-base',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedMenuBotRoute = AuthenticatedMenuBotRouteImport.update({
+  id: '/menu-bot',
+  path: '/menu-bot',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedPengaturanRoute = AuthenticatedPengaturanRouteImport.update({
+  id: '/pengaturan',
+  path: '/pengaturan',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedSetupChateraRoute =
+  AuthenticatedSetupChateraRouteImport.update({
+    id: '/setup-chatera',
+    path: '/setup-chatera',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedStatistikRoute = AuthenticatedStatistikRouteImport.update({
+  id: '/statistik',
+  path: '/statistik',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const ApiWebhooksChateraRoute = ApiWebhooksChateraRouteImport.update({
+  id: '/api/webhooks/chatera',
+  path: '/api/webhooks/chatera',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicHooksAutoCloseConversationsRoute =
+  ApiPublicHooksAutoCloseConversationsRouteImport.update({
+    id: '/api/public/hooks/auto-close-conversations',
+    path: '/api/public/hooks/auto-close-conversations',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicWebhooksChateraRoute =
+  ApiPublicWebhooksChateraRouteImport.update({
+    id: '/api/public/webhooks/chatera',
+    path: '/api/public/webhooks/chatera',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof IndexRoute
+  '/': typeof AuthenticatedIndexRoute
+  '/login': typeof LoginRoute
+  '/export': typeof AuthenticatedExportRoute
+  '/knowledge-base': typeof AuthenticatedKnowledgeBaseRoute
+  '/menu-bot': typeof AuthenticatedMenuBotRoute
+  '/pengaturan': typeof AuthenticatedPengaturanRoute
+  '/setup-chatera': typeof AuthenticatedSetupChateraRoute
+  '/statistik': typeof AuthenticatedStatistikRoute
+  '/api/webhooks/chatera': typeof ApiWebhooksChateraRoute
+  '/api/public/hooks/auto-close-conversations': typeof ApiPublicHooksAutoCloseConversationsRoute
+  '/api/public/webhooks/chatera': typeof ApiPublicWebhooksChateraRoute
 }
 export interface FileRoutesByTo {
-  '/': typeof IndexRoute
+  '/login': typeof LoginRoute
+  '/export': typeof AuthenticatedExportRoute
+  '/knowledge-base': typeof AuthenticatedKnowledgeBaseRoute
+  '/menu-bot': typeof AuthenticatedMenuBotRoute
+  '/pengaturan': typeof AuthenticatedPengaturanRoute
+  '/setup-chatera': typeof AuthenticatedSetupChateraRoute
+  '/statistik': typeof AuthenticatedStatistikRoute
+  '/': typeof AuthenticatedIndexRoute
+  '/api/webhooks/chatera': typeof ApiWebhooksChateraRoute
+  '/api/public/hooks/auto-close-conversations': typeof ApiPublicHooksAutoCloseConversationsRoute
+  '/api/public/webhooks/chatera': typeof ApiPublicWebhooksChateraRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
-  '/': typeof IndexRoute
+  '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/login': typeof LoginRoute
+  '/_authenticated/export': typeof AuthenticatedExportRoute
+  '/_authenticated/knowledge-base': typeof AuthenticatedKnowledgeBaseRoute
+  '/_authenticated/menu-bot': typeof AuthenticatedMenuBotRoute
+  '/_authenticated/pengaturan': typeof AuthenticatedPengaturanRoute
+  '/_authenticated/setup-chatera': typeof AuthenticatedSetupChateraRoute
+  '/_authenticated/statistik': typeof AuthenticatedStatistikRoute
+  '/_authenticated/': typeof AuthenticatedIndexRoute
+  '/api/webhooks/chatera': typeof ApiWebhooksChateraRoute
+  '/api/public/hooks/auto-close-conversations': typeof ApiPublicHooksAutoCloseConversationsRoute
+  '/api/public/webhooks/chatera': typeof ApiPublicWebhooksChateraRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/login'
+    | '/export'
+    | '/knowledge-base'
+    | '/menu-bot'
+    | '/pengaturan'
+    | '/setup-chatera'
+    | '/statistik'
+    | '/api/webhooks/chatera'
+    | '/api/public/hooks/auto-close-conversations'
+    | '/api/public/webhooks/chatera'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/login'
+    | '/export'
+    | '/knowledge-base'
+    | '/menu-bot'
+    | '/pengaturan'
+    | '/setup-chatera'
+    | '/statistik'
+    | '/'
+    | '/api/webhooks/chatera'
+    | '/api/public/hooks/auto-close-conversations'
+    | '/api/public/webhooks/chatera'
+  id:
+    | '__root__'
+    | '/_authenticated'
+    | '/login'
+    | '/_authenticated/export'
+    | '/_authenticated/knowledge-base'
+    | '/_authenticated/menu-bot'
+    | '/_authenticated/pengaturan'
+    | '/_authenticated/setup-chatera'
+    | '/_authenticated/statistik'
+    | '/_authenticated/'
+    | '/api/webhooks/chatera'
+    | '/api/public/hooks/auto-close-conversations'
+    | '/api/public/webhooks/chatera'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute
+  AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  LoginRoute: typeof LoginRoute
+  ApiWebhooksChateraRoute: typeof ApiWebhooksChateraRoute
+  ApiPublicHooksAutoCloseConversationsRoute: typeof ApiPublicHooksAutoCloseConversationsRoute
+  ApiPublicWebhooksChateraRoute: typeof ApiPublicWebhooksChateraRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/': {
-      id: '/'
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/': {
+      id: '/_authenticated/'
       path: '/'
       fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+      preLoaderRoute: typeof AuthenticatedIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/export': {
+      id: '/_authenticated/export'
+      path: '/export'
+      fullPath: '/export'
+      preLoaderRoute: typeof AuthenticatedExportRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/knowledge-base': {
+      id: '/_authenticated/knowledge-base'
+      path: '/knowledge-base'
+      fullPath: '/knowledge-base'
+      preLoaderRoute: typeof AuthenticatedKnowledgeBaseRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/menu-bot': {
+      id: '/_authenticated/menu-bot'
+      path: '/menu-bot'
+      fullPath: '/menu-bot'
+      preLoaderRoute: typeof AuthenticatedMenuBotRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/pengaturan': {
+      id: '/_authenticated/pengaturan'
+      path: '/pengaturan'
+      fullPath: '/pengaturan'
+      preLoaderRoute: typeof AuthenticatedPengaturanRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/setup-chatera': {
+      id: '/_authenticated/setup-chatera'
+      path: '/setup-chatera'
+      fullPath: '/setup-chatera'
+      preLoaderRoute: typeof AuthenticatedSetupChateraRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/statistik': {
+      id: '/_authenticated/statistik'
+      path: '/statistik'
+      fullPath: '/statistik'
+      preLoaderRoute: typeof AuthenticatedStatistikRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/api/webhooks/chatera': {
+      id: '/api/webhooks/chatera'
+      path: '/api/webhooks/chatera'
+      fullPath: '/api/webhooks/chatera'
+      preLoaderRoute: typeof ApiWebhooksChateraRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/auto-close-conversations': {
+      id: '/api/public/hooks/auto-close-conversations'
+      path: '/api/public/hooks/auto-close-conversations'
+      fullPath: '/api/public/hooks/auto-close-conversations'
+      preLoaderRoute: typeof ApiPublicHooksAutoCloseConversationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/webhooks/chatera': {
+      id: '/api/public/webhooks/chatera'
+      path: '/api/public/webhooks/chatera'
+      fullPath: '/api/public/webhooks/chatera'
+      preLoaderRoute: typeof ApiPublicWebhooksChateraRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
 }
 
+interface AuthenticatedRouteRouteChildren {
+  AuthenticatedExportRoute: typeof AuthenticatedExportRoute
+  AuthenticatedKnowledgeBaseRoute: typeof AuthenticatedKnowledgeBaseRoute
+  AuthenticatedMenuBotRoute: typeof AuthenticatedMenuBotRoute
+  AuthenticatedPengaturanRoute: typeof AuthenticatedPengaturanRoute
+  AuthenticatedSetupChateraRoute: typeof AuthenticatedSetupChateraRoute
+  AuthenticatedStatistikRoute: typeof AuthenticatedStatistikRoute
+  AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
+}
+
+const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedExportRoute: AuthenticatedExportRoute,
+  AuthenticatedKnowledgeBaseRoute: AuthenticatedKnowledgeBaseRoute,
+  AuthenticatedMenuBotRoute: AuthenticatedMenuBotRoute,
+  AuthenticatedPengaturanRoute: AuthenticatedPengaturanRoute,
+  AuthenticatedSetupChateraRoute: AuthenticatedSetupChateraRoute,
+  AuthenticatedStatistikRoute: AuthenticatedStatistikRoute,
+  AuthenticatedIndexRoute: AuthenticatedIndexRoute,
+}
+
+const AuthenticatedRouteRouteWithChildren =
+  AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
-  IndexRoute: IndexRoute,
+  AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
+  LoginRoute: LoginRoute,
+  ApiWebhooksChateraRoute: ApiWebhooksChateraRoute,
+  ApiPublicHooksAutoCloseConversationsRoute:
+    ApiPublicHooksAutoCloseConversationsRoute,
+  ApiPublicWebhooksChateraRoute: ApiPublicWebhooksChateraRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
