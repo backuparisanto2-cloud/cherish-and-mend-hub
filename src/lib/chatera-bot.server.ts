@@ -440,7 +440,12 @@ export async function resolveAiReply(text: string): Promise<{
         body: JSON.stringify({
           model,
           messages: [
-            { role: "system", content: `${AI_SYSTEM_PROMPT}\n\nInformasi resmi:\n${context}` },
+            {
+              role: "system",
+              content:
+                `${AI_SYSTEM_PROMPT}${language === "en" ? `\n\n${AI_ENGLISH_RULES}` : ""}` +
+                `\n\nInformasi resmi:\n${context}`,
+            },
             { role: "user", content: text },
           ],
           stream: false,
