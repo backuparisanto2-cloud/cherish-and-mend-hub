@@ -785,7 +785,7 @@ export async function sendBotReply(context: SendContext): Promise<void> {
   }
 
   // Semua teks keluar dinormalkan agar tautan, email, dan nomor telepon aktif.
-  const isMainMenu = context.text === MAIN_MENU;
+  const isMainMenu = context.text.startsWith(MAIN_MENU);
   const ctx: SendContext = { ...context, text: toWhatsAppText(context.text) };
 
   let messageId: string | null = null;
