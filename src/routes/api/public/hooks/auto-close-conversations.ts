@@ -5,7 +5,7 @@ export const Route = createFileRoute("/api/public/hooks/auto-close-conversations
     handlers: {
       POST: async ({ request }) => {
         // Hanya penjadwal internal (pg_cron) yang boleh memanggil endpoint ini.
-        const expected = process.env["AUTO_CLOSE_CRON_SECRET"];
+        const expected = process.env["AUTO_CLOSE_CRON_TOKEN"];
         const token = /^Bearer ([^\s,]+)$/.exec(
           request.headers.get("authorization") ?? "",
         )?.[1];
