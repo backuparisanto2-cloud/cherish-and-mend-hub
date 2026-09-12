@@ -194,14 +194,32 @@ export async function handleChateraWebhook(request: Request): Promise<Response> 
     Boolean(inbound?.senderPhone) &&
     conversationStatus !== "agent_active" &&
     conversationStatus !== "waiting_agent";
+  let languageNotice: string | null = null;
   if (inbound?.senderPhone && botShouldReply) {
-    const { resolveReply, sendBotReply, sendBotMessages, isAffirmativeReply, AGENT_REPLY, WAIT_NOTICE } =
+    const { resolveReply, sendBotReply, sendBotMessages, localizedMainMenu } =
       await import("@/lib/chatera-bot.server");
+    const { botStrings, detectLanguageCommand, isAffirmativeIn, languageSwitchNotice } =
+      await import("@/lib/bot-language");
+
+    // Perintah bahasa: simpan pilihan warga, lalu jawab dalam bahasa tersebut.
+    const requested = detectLanguageCommand(inbound.text);
+    if (requested && requested !== language && inbound.conversationId) {
+      language = requested;
+      languageNotice = languageSwitchNotice(requested);
+      await supabaseAdmin
+        .from("conversations")
+        .update({ language: requested })
+        .eq("chatera_conversation_id", inbound.conversationId);
+    } else if (requested) {
+      languageNotice = languageSwitchNotice(requested);
+    }
 
     // Balasan "ya" tepat setelah pesan tidak ditemukan = setuju disambungkan
     // ke petugas. Balasan lain membatalkan penanda dan diproses seperti biasa.
     const confirmedOperator =
-      awaitingOperatorConfirmation && isAffirmativeReply(inbound.text);
+      awaitingOperatorConfirmation && isAffirmativeIn(inbound.text);
+    const AGENT_REPLY = botStrings(language).agentReply;
+    const WAIT_NOTICE = botStrings(language).waitNotice;
 
     // Nama WhatsApp warga untuk sapaan personal (payload -> fallback kontak).
     let senderName: string | null = data.sender?.name ?? null;
