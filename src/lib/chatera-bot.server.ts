@@ -129,7 +129,9 @@ function show(key: string): AutoReply {
 export function resolveAutoReply(
   text: string | null | undefined,
   currentMenuPath: string | null = null,
+  language: BotLanguage = "id",
 ): AutoReply {
+  const unknownPrefix = botStrings(toBotLanguage(language)).unknownPrefix;
   const normalized = (text ?? "").trim().toLowerCase();
   if (HELP_COMMANDS.has(normalized)) {
     return { reply: HELP_REPLY, menuPath: currentMenuPath };
