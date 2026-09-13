@@ -415,6 +415,7 @@ async function pickModel(apiKey: string): Promise<string | null> {
 export async function resolveAiReply(
   text: string,
   language: BotLanguage = "id",
+  memory: MemoryTurn[] = [],
 ): Promise<{
   reply: string;
   escalate: boolean;
