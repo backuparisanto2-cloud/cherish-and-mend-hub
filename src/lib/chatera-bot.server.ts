@@ -359,6 +359,15 @@ const AI_ENGLISH_RULES =
   "and add the English meaning in brackets on the FIRST mention only, e.g. " +
   "\"Kartu Keluarga (Family Card)\". Keep URLs, emails, and phone numbers unchanged.";
 
+/** Aturan pemakaian memori percakapan (beberapa giliran terakhir). */
+const AI_MEMORY_RULES =
+  "Kamu diberi riwayat singkat percakapan ini. Gunakan riwayat itu sebagai ingatan: " +
+  "ingat nama warga, dokumen/layanan yang sedang dibahas, dan data yang sudah disebutkan, " +
+  "supaya pertanyaan lanjutan yang singkat (misalnya \"kalau belum punya?\", \"biayanya?\", " +
+  "\"di mana?\") dijawab sesuai topik terakhir. Jangan menanyakan ulang hal yang sudah dijawab warga, " +
+  "dan jangan mengulang sapaan bila percakapan sudah berjalan. " +
+  "Jangan mengarang informasi yang tidak ada di riwayat maupun di informasi resmi.";
+
 export type BotEngine = "keyword" | "ai_external";
 
 /** Baca mesin jawaban yang dipilih Owner di halaman Pengaturan. */
