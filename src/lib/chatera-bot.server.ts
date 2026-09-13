@@ -696,10 +696,15 @@ export async function resolveReply(
     // Di menu utama (belum masuk sub-menu), pertanyaan bebas warga selalu
     // dikirim ke AI eksternal JTG; kegagalan otomatis fallback ke kata kunci.
     const atMainMenu = !currentMenuPath;
-    result =
-      engine === "ai_external" || atMainMenu
-        ? await resolveAiReply(question, lang)
-        : await resolveKnowledgeReply(question, lang);
+    if (engine === "ai_external" || atMainMenu) {
+      // Memori: beberapa giliran terakhir percakapan ini ikut dikirim ke AI.
+      const memory = await loadConversationMemory(chateraConversationId, {
+        excludeText: question,
+      });
+      result = await resolveAiReply(question, lang, memory);
+    } else {
+      result = await resolveKnowledgeReply(question, lang);
+    }
   }
 
   return { ...result, messages: [result.reply] };
