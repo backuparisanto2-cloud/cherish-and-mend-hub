@@ -455,8 +455,10 @@ export async function resolveAiReply(
               role: "system",
               content:
                 `${AI_SYSTEM_PROMPT}${language === "en" ? `\n\n${AI_ENGLISH_RULES}` : ""}` +
+                (memory.length > 0 ? `\n\n${AI_MEMORY_RULES}` : "") +
                 `\n\nInformasi resmi:\n${context}`,
             },
+            ...memory.map((turn) => ({ role: turn.role, content: turn.content })),
             { role: "user", content: text },
           ],
           stream: false,
