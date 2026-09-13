@@ -634,6 +634,7 @@ export async function resolveReply(
   currentMenuPath: string | null = null,
   senderName: string | null = null,
   language: BotLanguage = "id",
+  chateraConversationId: string | null = null,
 ): Promise<{
   messages: string[];
   reply: string;
