@@ -252,7 +252,13 @@ export async function handleChateraWebhook(request: Request): Promise<Response> 
         notFound: false,
       };
     } else {
-      const pending = resolveReply(inbound.text, currentMenuPath, senderName, language);
+      const pending = resolveReply(
+        inbound.text,
+        currentMenuPath,
+        senderName,
+        language,
+        inbound.conversationId,
+      );
       // Kalau jawaban belum siap dalam 3 detik, warga lebih dulu diberi kabar
       // supaya tidak merasa dibiarkan menunggu.
       const race = await Promise.race([

@@ -10,6 +10,7 @@ import {
 } from "./bot-language";
 import { translateBotText } from "./bot-translate.server";
 import { toWhatsAppText } from "./whatsapp-format";
+import { loadConversationMemory, type MemoryTurn } from "./bot-memory.server";
 
 const CHATERA_BASE_URL = "https://api.chatera.id/v1";
 
@@ -358,6 +359,15 @@ const AI_ENGLISH_RULES =
   "and add the English meaning in brackets on the FIRST mention only, e.g. " +
   "\"Kartu Keluarga (Family Card)\". Keep URLs, emails, and phone numbers unchanged.";
 
+/** Aturan pemakaian memori percakapan (beberapa giliran terakhir). */
+const AI_MEMORY_RULES =
+  "Kamu diberi riwayat singkat percakapan ini. Gunakan riwayat itu sebagai ingatan: " +
+  "ingat nama warga, dokumen/layanan yang sedang dibahas, dan data yang sudah disebutkan, " +
+  "supaya pertanyaan lanjutan yang singkat (misalnya \"kalau belum punya?\", \"biayanya?\", " +
+  "\"di mana?\") dijawab sesuai topik terakhir. Jangan menanyakan ulang hal yang sudah dijawab warga, " +
+  "dan jangan mengulang sapaan bila percakapan sudah berjalan. " +
+  "Jangan mengarang informasi yang tidak ada di riwayat maupun di informasi resmi.";
+
 export type BotEngine = "keyword" | "ai_external";
 
 /** Baca mesin jawaban yang dipilih Owner di halaman Pengaturan. */
@@ -415,6 +425,7 @@ async function pickModel(apiKey: string): Promise<string | null> {
 export async function resolveAiReply(
   text: string,
   language: BotLanguage = "id",
+  memory: MemoryTurn[] = [],
 ): Promise<{
   reply: string;
   escalate: boolean;
@@ -453,8 +464,10 @@ export async function resolveAiReply(
               role: "system",
               content:
                 `${AI_SYSTEM_PROMPT}${language === "en" ? `\n\n${AI_ENGLISH_RULES}` : ""}` +
+                (memory.length > 0 ? `\n\n${AI_MEMORY_RULES}` : "") +
                 `\n\nInformasi resmi:\n${context}`,
             },
+            ...memory.map((turn) => ({ role: turn.role, content: turn.content })),
             { role: "user", content: text },
           ],
           stream: false,
@@ -621,6 +634,7 @@ export async function resolveReply(
   currentMenuPath: string | null = null,
   senderName: string | null = null,
   language: BotLanguage = "id",
+  chateraConversationId: string | null = null,
 ): Promise<{
   messages: string[];
   reply: string;
@@ -682,10 +696,15 @@ export async function resolveReply(
     // Di menu utama (belum masuk sub-menu), pertanyaan bebas warga selalu
     // dikirim ke AI eksternal JTG; kegagalan otomatis fallback ke kata kunci.
     const atMainMenu = !currentMenuPath;
-    result =
-      engine === "ai_external" || atMainMenu
-        ? await resolveAiReply(question, lang)
-        : await resolveKnowledgeReply(question, lang);
+    if (engine === "ai_external" || atMainMenu) {
+      // Memori: beberapa giliran terakhir percakapan ini ikut dikirim ke AI.
+      const memory = await loadConversationMemory(chateraConversationId, {
+        excludeText: question,
+      });
+      result = await resolveAiReply(question, lang, memory);
+    } else {
+      result = await resolveKnowledgeReply(question, lang);
+    }
   }
 
   return { ...result, messages: [result.reply] };
