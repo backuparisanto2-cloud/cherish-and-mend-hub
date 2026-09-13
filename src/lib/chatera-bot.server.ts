@@ -10,6 +10,7 @@ import {
 } from "./bot-language";
 import { translateBotText } from "./bot-translate.server";
 import { toWhatsAppText } from "./whatsapp-format";
+import { loadConversationMemory, type MemoryTurn } from "./bot-memory.server";
 
 const CHATERA_BASE_URL = "https://api.chatera.id/v1";
 
